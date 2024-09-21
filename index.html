@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Form</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+
+<body>
+    <h1 class="heading">Registration Form</h1>
+    <form id="registrationForm">
+        <label for="name">Name:</label><br>
+        <input type="text" id="name" name="name"><br>
+        <label id="name-error" class="error" for="name"></label><br> <!-- Error message for Name -->
+
+        <label for="email">Email:</label><br>
+        <input type="email" id="email" name="email"><br>
+        <label id="email-error" class="error" for="email"></label><br> <!-- Error message for Email -->
+
+        <label for="city">City:</label><br>
+        <input type="text" id="city" name="city"><br><br>
+        <label id="city-error" class="error" for="city"></label><br> <!-- Error message for City -->
+
+        <input type="submit" value="Submit">
+    </form>
+
+    <div id="messages-container">
+        <div class="success-message">Form successfully submitted!</div>
+        <div class="limit-message">Email limit reached!</div>
+    </div>
+    
+
+
+    <div id="countDisplay" class="table-top">Count: 0</div>
+    <button id="deleteAll" class="table-top">Delete All</button>
+
+    <table id="registrationTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>City</th>
+                <th>Action</th> <!-- Action column for delete button -->
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Table body content will be added dynamically -->
+        </tbody>
+    </table>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.3/dist/jquery.validate.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            var count = 0; // Initialize count variable
+
+            // Load data from local storage when the page loads
+            if (localStorage.getItem("registrations")) {
+                $("#registrationTable tbody").html(localStorage.getItem("registrations"));
+                count = $("#registrationTable tbody tr").length;
+                $("#countDisplay").text("Count: " + count);
+            }
+
+            $("#registrationForm").validate({
+                rules: {
+                    name: "required",
+                    email: {
+                        required: true,
+                        email: true
+                    },
+                    city: "required"
+                },
+                messages: {
+                    name: "Please enter your name",
+                    email: {
+                        required: "Please enter your email",
+                        email: "Please enter a valid email address"
+                    },
+                    city: "Please enter your city"
+                },
+
+                submitHandler: function (form) {
+                    var name = $("#name").val();
+                    var email = $("#email").val();
+                    var city = $("#city").val();
+
+                    // Check if email already exists
+                    var existingEmail = $("#registrationTable tbody").find("td:nth-child(2)").filter(function () {
+                        return $(this).text() === email;
+                    }).length > 0;
+
+                    if (existingEmail) {
+                        // Show error message if email already exists
+                        $("#email-error").text("Email already exists").show();
+                    } else {
+                        // Hide error message if email does not exist
+                        $("#email-error").hide();
+                        if (count < 10) {
+                            // Append the entered data to the table
+                            $("#registrationTable tbody").append("<tr><td>" + name + "</td><td>" + email + "</td><td>" + city + "</td><td><button class='deleteRow'>Delete</button></td></tr>");
+
+                            // Increment count
+                            count++;
+
+                            // Update count display
+                            $("#countDisplay").text("Count: " + count);
+
+                            // Save data to local storage
+                            localStorage.setItem("registrations", $("#registrationTable tbody").html());
+
+                            // Show success message
+                            $(".success-message").show().fadeOut(3000); // Fade out after 3 seconds
+
+                            // Reset the form
+                            form.reset();
+                        } else {
+                            // Show error message if email limit is reached
+                            $(".success-message").text("Email limit reached!").show().fadeOut(5000); // Fade out after 5 seconds
+                        }
+                    }
+                }
+            });
+
+            // Delete button click event handler
+            $(document).on("click", ".deleteRow", function () {
+                $(this).closest("tr").remove(); // Remove the corresponding row
+
+                // Decrement count
+                count--;
+
+                // Update count display
+                $("#countDisplay").text("Count: " + count);
+
+                // Save data to local storage
+                localStorage.setItem("registrations", $("#registrationTable tbody").html());
+            });
+
+            // Delete all button click event handler
+            $("#deleteAll").click(function () {
+                $("#registrationTable tbody").empty(); // Remove all rows from the table
+
+                // Reset count
+                count = 0;
+
+                // Update count display
+                $("#countDisplay").text("Count: " + count);
+
+                // Clear data from local storage
+                localStorage.removeItem("registrations");
+            });
+        });
+    </script>
+</body>
+
+</html>
